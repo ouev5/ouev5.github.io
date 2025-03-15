@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数学函数计算器</title>
+  <style>
+    :root {
+        --primary-color: #4CAF50;
+        --error-color: #ff4444;
+        --text-color: #333;
+        --background-color: #f5f5f5;
+        --border-color: #ddd;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 16px;
+        color: #444;
+    }
+
+    .calculator {
+        background: white;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        position: relative;
+        padding-bottom: 60px;
+    }
+
+    .button-container {
+        margin: 25px 0 15px;
+        position: relative;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      font-size: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      background: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 7px rgba(0,0,0,0.2);
+    }
+
+    #inputFields {
+        margin: 20px 0;
+    }
+
+    .geometry-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    #graphCanvas {
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        margin: 40px auto 20px;
+        display: none;
+    }
+
+    #result {
+        margin-bottom: 30px;
+    }
+
+    input:focus, select:focus {
+        outline: 2px solid var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="loginForm" style="max-width: 400px; margin: 100px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; color: var(--primary-color); font-size: 2rem; margin-bottom: 30px; font-weight: 500;">请登录</h2>
+    <input type="text" id="username" placeholder="账号" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
+    <input type="password" id="password" placeholder="密码" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px;">
+    <button onclick="checkLogin()" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">登录</button>
+    <div style="text-align: center; margin: 20px 0; color: #666;">请给QQ292636146转账5元</div>
+<div style="text-align: center; color: #666;">出现账号密码</div>
+    <button onclick="handlePayment()" style="width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">支付完成</button>
+  </div>
+
+  <div class="calculator" style="display: none;">
+    <h1 style="text-align: center; color: var(--primary-color); font-size: 2.5rem; margin-bottom: 30px;">函数计算器</h1>
+    <select id="functionType" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--primary-color); border-radius: 8px; width: 100%; margin: 20px 0; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+      <option value="" disabled selected>请选择函数类型</option>
+      <option value="linear">一元一次方程 (ax + b = 0)</option>
+      <option value="quadratic">二次方程 (ax² + bx + c = 0)</option>
+      <option value="exponential">指数函数 (a^b)</option>
+      <option value="logarithm">对数函数 (logₐb)</option>
+      <option value="circle">圆</option>
+      <option value="ellipse">椭圆</option>
+      <option value="hyperbola">双曲线</option>
+      <option value="parabola">抛物线</option>
+    </select>
+
+    <div id="inputFields"></div>
+
+    <div class="button-container" style="display: flex; justify-content: space-between; margin: 40px 0;">
+      <button onclick="calculate()" style="font-size: 1.1rem; letter-spacing: 1px; width: 48%; padding: 12px;">立即计算</button>
+      <button onclick="toggleGraph()" style="font-size: 1.1rem; letter-spacing: 1px; width: 48%; padding: 12px;">显示图像</button>
+    
+  </div>
+    <div id="result" style="margin: 30px 0; padding: 20px; background-color: var(--background-color); border-radius: 10px; border: 1px solid var(--border-color); font-size: 1.1rem; color: var(--text-color); line-height: 1.8;"></div>
+    <canvas id="graphCanvas" style="width: 100%; height: auto;"></canvas>
+    <div class="history-panel" style="margin: 40px auto 20px; padding: 20px; background: #f5f5f5; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+      <h3>计算历史</h3>
+      <ul id="historyList" style="list-style: none; padding: 0; margin: 0;"></ul>
+      <button onclick="clearHistory()" style="margin-top: 10px; padding: 8px 16px; background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer;">清除历史</button>
+    </div>
+  </div>
+
+  
+
+  <script>
+    function clearHistory() {
+      calculationHistory = [];
+      localStorage.removeItem('calcHistory');
+      const historyList = document.getElementById('historyList');
+      if (historyList) historyList.innerHTML = '';
+    }
+    let calculationHistory = [];
+
+    let clickCount = 0;
+
+function handlePayment() {
+  clickCount++;
+  if(clickCount < 5) {
+    alert('未支付');
+  } else {
+    alert('账号：xxx 密码：123456');
+  }
+}
+
+function checkLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      if((username === 'llh' && password === '20071231') || (username === 'xxx' && password === '123456')) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.querySelector('.calculator').style.display = 'block';
+      } else {
+        alert('账号或密码错误');
+      }
+    }
+
+    
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function toggleGraph() {
+      const canvas = document.getElementById('graphCanvas');
+      if (canvas) {
+        canvas.style.display = canvas.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    function addToHistory(result) {
+      const historyList = document.getElementById('historyList');
+      if (!historyList) return;
+
+      const historyItem = document.createElement('li');
+      historyItem.textContent = result;
+      historyItem.style.padding = '8px';
+      historyItem.style.borderBottom = '1px solid #eee';
+      historyList.appendChild(historyItem);
+    }
+
+
+    function calculate() {
+      const functionType = document.getElementById('functionType').value;
+      const inputs = document.querySelectorAll('#inputFields input');
+      let params = Array.from(inputs).map(input => parseFloat(input.value));
+
+      // 自动补全缺失参数
+      if(functionType === 'circle' && params.length === 2) {
+        // 已知圆心(x,y)，自动计算半径为1
+        params.push(1);
+        inputs[2].value = 1;
+      }
+      if(functionType === 'ellipse' && params.length === 3) {
+        // 已知中心点(x,y)和长轴，自动计算短轴为长轴的一半
+        params.push(params[2]/2);
+        inputs[3].value = params[2]/2;
+      }
+      if(functionType === 'hyperbola' && params.length === 3) {
+        // 已知中心点(x,y)和实轴，自动计算虚轴为实轴的一半
+        params.push(params[2]/2);
+        inputs[3].value = params[2]/2;
+      }
+      if(functionType === 'parabola' && params.length === 2) {
+        // 已知顶点(x,y)，自动计算p=1
+        params.push(1);
+        inputs[2].value = 1;
+      }
+
+      try {
+        let result;
+        switch(functionType) {
+          case 'linear':
+            if(params[0] === 0) throw 'a不能为0';
+            result = `x = ${(-params[1]/params[0]).toFixed(4)}`;
+addToHistory(result);
+            drawGeometry('linear', params);
+            break;
+          case 'quadratic':
+            if(params[0] === 0) throw 'a不能为0';
+            const discriminant = params[1]**2 - 4*params[0]*params[2];
+            if(discriminant < 0) throw '无实数解';
+            const x1 = (-params[1] + Math.sqrt(discriminant))/(2*params[0]);
+            const x2 = (-params[1] - Math.sqrt(discriminant))/(2*params[0]);
+            result = `x1 = ${x1.toFixed(4)}, x2 = ${x2.toFixed(4)}`;
+addToHistory(result);
+            drawGeometry('quadratic', params);
+            break;
+          case 'exponential':
+            result = `结果: ${Math.pow(params[0], params[1]).toFixed(4)}`;
+addToHistory(result);
+            drawGeometry('exponential', params);
+            break;
+          case 'logarithm':
+            if(params[0] <= 0 || params[1] <= 0) throw '参数必须大于0';
+            result = `log_${params[0]}(${params[1]}) = ${(Math.log(params[1])/Math.log(params[0])).toFixed(4)}`;
+addToHistory(result);
+            drawGeometry('logarithm', params);
+            break;
+          case 'circle':
+            if(params[2] <= 0) throw '半径必须大于0';
+            result = `(x - ${params[0]})² + (y - ${params[1]})² = ${params[2].toFixed(2)}²`;
+addToHistory(result);
+            drawGeometry('circle', params);
+            break;
+          case 'ellipse':
+            if(params[2] <= 0 || params[3] <= 0) throw '轴长必须大于0';
+            result = `(x - ${params[0]})²/${params[2].toFixed(2)}² + (y - ${params[1]})²/${params[3].toFixed(2)}² = 1`;
+addToHistory(result);
+            drawGeometry('ellipse', params);
+            break;
+          case 'hyperbola':
+            if(params[2] <= 0 || params[3] <= 0) throw '轴长必须大于0';
+            result = `(x - ${params[0]})²/${params[2].toFixed(2)}² - (y - ${params[1]})²/${params[3].toFixed(2)}² = 1`;
+            drawGeometry('hyperbola', params);
+            break;
+          case 'parabola':
+            result = `y² = 4 * ${params[0].toFixed(2)} * x`;
+            drawGeometry('parabola', params);
+            break;
+          default:
+            throw '未知的计算类型';
+        }
+
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = result;
+        resultDiv.className = 'result-success';
+        resultDiv.style.display = 'block';
+
+        calculationHistory.push({type: functionType, params: params, result: result, date: new Date()});
+        addToHistory(result);
+        localStorage.setItem('calcHistory', JSON.stringify(calculationHistory));
+    
+      } catch(error) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = error;
+        resultDiv.className = 'result-error';
+        resultDiv.style.display = 'block';
+      }
+    }
+
+    function drawGeometry(type, params) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      const scale = 20;
+      const centerX = canvas.width/2;
+      const centerY = canvas.height/2;
+      canvas.width = 400;
+      canvas.height = 400;
+
+      // 绘制坐标系
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 1;
+      // 绘制X轴
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(canvas.width, centerY);
+      // 绘制Y轴
+      ctx.moveTo(centerX, 0);
+      ctx.lineTo(centerX, canvas.height);
+      // 绘制刻度
+      ctx.font = '10px Arial';
+      ctx.fillStyle = '#666';
+      for(let i = -5; i <= 5; i++) {
+        // X轴刻度
+        const x = centerX + i * scale;
+        ctx.moveTo(x, centerY - 5);
+        ctx.lineTo(x, centerY + 5);
+        if(i !== 0) ctx.fillText(i, x - 3, centerY + 15);
+        // Y轴刻度
+        const y = centerY - i * scale;
+        ctx.moveTo(centerX - 5, y);
+        ctx.lineTo(centerX + 5, y);
+        if(i !== 0) ctx.fillText(i, centerX + 10, y + 3);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+
+      // 绘制坐标系
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 1;
+      // 绘制X轴
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(canvas.width, centerY);
+      // 绘制Y轴
+      ctx.moveTo(centerX, 0);
+      ctx.lineTo(centerX, canvas.height);
+      // 绘制刻度
+      ctx.font = '10px Arial';
+      ctx.fillStyle = '#666';
+      for(let i = -5; i <= 5; i++) {
+        // X轴刻度
+        const x = centerX + i * scale;
+        ctx.moveTo(x, centerY - 5);
+        ctx.lineTo(x, centerY + 5);
+        if(i !== 0) ctx.fillText(i, x - 3, centerY + 15);
+        // Y轴刻度
+        const y = centerY - i * scale;
+        ctx.moveTo(centerX - 5, y);
+        ctx.lineTo(centerX + 5, y);
+        if(i !== 0) ctx.fillText(i, centerX + 10, y + 3);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+
+      // 标注特殊点坐标
+      ctx.fillStyle = '#f00';
+      ctx.font = '12px Arial';
+
+      switch(type) {
+        case 'linear':
+          const [a, b] = params;
+          ctx.beginPath();
+          for(let x = -5; x <= 5; x += 0.1) {
+            const y = a * x + b;
+            ctx.lineTo(centerX + x * scale, centerY - y * scale);
+          }
+          // 标注极值点
+          if(type === 'quadratic') {
+            const vertexX = -qb / (2 * qa);
+            const vertexY = qa * vertexX * vertexX + qb * vertexX + qc;
+            ctx.beginPath();
+            ctx.arc(centerX + vertexX * scale, centerY - vertexY * scale, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText(`(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`, centerX + vertexX * scale + 5, centerY - vertexY * scale - 5);
+          }
+          break;
+        case 'quadratic':
+          const [qa, qb, qc] = params;
+          ctx.beginPath();
+          for(let x = -5; x <= 5; x += 0.1) {
+            const y = qa * x * x + qb * x + qc;
+            ctx.lineTo(centerX + x * scale, centerY - y * scale);
+          }
+          // 标注极值点
+          if(type === 'quadratic') {
+            const vertexX = -qb / (2 * qa);
+            const vertexY = qa * vertexX * vertexX + qb * vertexX + qc;
+            ctx.beginPath();
+            ctx.arc(centerX + vertexX * scale, centerY - vertexY * scale, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText(`(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`, centerX + vertexX * scale + 5, centerY - vertexY * scale - 5);
+          }
+          break;
+        case 'exponential':
+          const [base, exp] = params;
+          ctx.beginPath();
+          for(let x = -5; x <= 5; x += 0.1) {
+            const y = Math.pow(base, x * exp);
+            ctx.lineTo(centerX + x * scale, centerY - y * scale);
+          }
+          // 标注极值点
+          if(type === 'quadratic') {
+            const vertexX = -qb / (2 * qa);
+            const vertexY = qa * vertexX * vertexX + qb * vertexX + qc;
+            ctx.beginPath();
+            ctx.arc(centerX + vertexX * scale, centerY - vertexY * scale, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText(`(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`, centerX + vertexX * scale + 5, centerY - vertexY * scale - 5);
+          }
+          break;
+        case 'logarithm':
+          const [logBase, logArg] = params;
+          ctx.beginPath();
+          for(let x = 0.1; x <= 5; x += 0.1) {
+            const y = Math.log(x * logArg) / Math.log(logBase);
+            ctx.lineTo(centerX + x * scale, centerY - y * scale);
+          }
+          // 标注极值点
+          if(type === 'quadratic') {
+            const vertexX = -qb / (2 * qa);
+            const vertexY = qa * vertexX * vertexX + qb * vertexX + qc;
+            ctx.beginPath();
+            ctx.arc(centerX + vertexX * scale, centerY - vertexY * scale, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText(`(${vertexX.toFixed(2)}, ${vertexY.toFixed(2)})`, centerX + vertexX * scale + 5, centerY - vertexY * scale - 5);
+          }
+          break;
+        case 'circle':
+          const [cx, cy, r] = params;
+          ctx.arc(centerX + cx * scale, centerY - cy * scale, r * scale, 0, 2 * Math.PI);
+          break;
+        case 'ellipse':
+          const [ex, ey, axisA, axisB] = params;
+          ctx.ellipse(centerX + ex * scale, centerY - ey * scale, a * scale, b * scale, 0, 0, 2 * Math.PI);
+          break;
+        case 'hyperbola':
+          const [hx, hy, ha, hb] = params;
+          for(let x = ha; x <= 5; x += 0.1) {
+            const y = hb * Math.sqrt((x/ha)**2 - 1);
+            ctx.lineTo(centerX + x * scale, centerY - (hy + y) * scale);
+            ctx.lineTo(centerX + x * scale, centerY - (hy - y) * scale);
+          }
+          for(let x = -ha; x >= -5; x -= 0.1) {
+            const y = hb * Math.sqrt((x/ha)**2 - 1);
+            ctx.lineTo(centerX + x * scale, centerY - (hy + y) * scale);
+            ctx.lineTo(centerX + x * scale, centerY - (hy - y) * scale);
+          }
+          break;
+        case 'parabola':
+          const [px, py, p] = params;
+          for(let x = -5; x <= 5; x += 0.1) {
+            const y = Math.sqrt(4 * p * x);
+            ctx.lineTo(centerX + x * scale, centerY - (py + y) * scale);
+            ctx.lineTo(centerX + x * scale, centerY - (py - y) * scale);
+          }
+          break;
+      }
+      ctx.stroke();
+    }
+
+    
+
+    // 页面加载时从localStorage读取历史记录
+    
+
+    document.getElementById('functionType').addEventListener('change', function() {
+      const functionType = this.value;
+      const inputFields = document.getElementById('inputFields');
+      inputFields.innerHTML = '';
+
+      switch(functionType) {
+        case 'linear':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="a" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="b" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'quadratic':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="a" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="b" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="c" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'exponential':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="a" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="b" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'logarithm':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="a" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="b" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'circle':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="x" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="y" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="半径" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'ellipse':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="x" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="y" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="长轴" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="短轴" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'hyperbola':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="x" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="y" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="实轴" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="虚轴" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+        case 'parabola':
+          inputFields.innerHTML = `
+            <input type="number" placeholder="x" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="y" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+            <input type="number" placeholder="p" style="font-size: 1.2rem; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; width: 100%; margin: 10px 0;">
+          `;
+          break;
+      }
+    });
+
+
+  </script>
+</body>
+</html>
